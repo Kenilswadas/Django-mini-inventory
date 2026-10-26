@@ -152,7 +152,7 @@ STORAGES = {
         "BACKEND": "django.core.files.storage.FileSystemStorage",
     },
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
     },
 }
 
@@ -165,6 +165,9 @@ MAILERS = {
         "BACKEND": "django.core.mail.backends.console.EmailBackend",
     },
 }
+
+# Trust Render SSL Termination Proxy
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 # CORS Configuration
 # In development, allow requests from local frontend servers (Vite/React).
@@ -186,13 +189,14 @@ CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^https:\/\/.*\.vercel\.app$",
 ]
 
-# CSRF Trusted Origins for Django Admin and mutating POST requests on Vercel
+# CSRF Trusted Origins for Django Admin and mutating POST requests
 csrf_origins_env = os.getenv("CSRF_TRUSTED_ORIGINS", "")
 if csrf_origins_env:
     CSRF_TRUSTED_ORIGINS = [o.strip() for o in csrf_origins_env.split(",") if o.strip()]
 else:
     CSRF_TRUSTED_ORIGINS = [
         "https://*.vercel.app",
+        "https://*.onrender.com",
         "http://localhost:5173",
         "http://127.0.0.1:5173",
     ]
