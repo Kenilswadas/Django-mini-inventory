@@ -1,7 +1,9 @@
 import React from 'react';
+import { getBaseUrl } from '../api/productApi';
 
 export default function Navbar() {
-  const adminUrl = import.meta.env.PROD ? '/admin/' : 'http://127.0.0.1:8000/admin/';
+  const backendBase = getBaseUrl().replace(/\/api\/?$/, '');
+  const adminUrl = `${backendBase}/admin/`;
 
   return (
     <header className="sticky top-0 z-40 bg-white border-b border-slate-200">
