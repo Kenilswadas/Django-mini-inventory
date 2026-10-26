@@ -1,7 +1,7 @@
-
 from django.contrib import admin
 from django.urls import path, include
 from django.http import JsonResponse
+from inventory.urls import direct_router
 
 
 def home(request):
@@ -21,4 +21,5 @@ urlpatterns = [
     path("", home, name="home"),
     path("admin/", admin.site.urls),
     path("api/", include("inventory.urls")),
+    path("products/", include(direct_router.urls)),
 ]

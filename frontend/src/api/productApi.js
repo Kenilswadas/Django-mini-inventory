@@ -1,9 +1,38 @@
 /**
  * API service module for communicating with the Django REST Framework backend.
- * Uses the Fetch API and environment-driven base URL.
+ * Uses the Fetch API and environment-driven base URL with intelligent normalization.
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.PROD ? '/api' : 'http://127.0.0.1:8000/api');
+/**
+ * Normalizes the backend API base URL from environment or defaults.
+ * Automatically handles:
+ * - Missing /api (e.g. user entered https://example.onrender.com)
+ * - Trailing slashes (e.g. https://example.onrender.com/ or https://example.onrender.com/api/)
+ * - Accidental /products path (e.g. https://example.onrender.com/api/products)
+ */
+export function getBaseUrl() {
+  let url = (import.meta.env.VITE_API_BASE_URL || '').trim();
+
+  if (!url) {
+    // In production without an explicit VITE_API_BASE_URL, default to relative '/api'
+    return import.meta.env.PROD ? '/api' : 'http://127.0.0.1:8000/api';
+  }
+
+  // Strip trailing slashes
+  url = url.replace(/\/+$/, '');
+
+  // Strip trailing /products or /products/ if user entered it
+  if (url.endsWith('/products')) {
+    url = url.substring(0, url.length - '/products'.length).replace(/\/+$/, '');
+  }
+
+  // Ensure /api suffix exists
+  if (!url.endsWith('/api')) {
+    url = `${url}/api`;
+  }
+
+  return url;
+}
 
 /**
  * Helper to parse response and throw formatted errors for non-2xx responses.
@@ -24,17 +53,21 @@ async function handleResponse(response) {
 
     if (isJson && typeof data === 'object') {
       fieldErrors = data;
-      // Extract first error message for high-level alert
-      const messages = Object.entries(data)
-        .map(([field, errs]) => {
-          const text = Array.isArray(errs) ? errs.join(' ') : String(errs);
-          return `${field}: ${text}`;
-        });
+      // Extract field errors for high-level alert
+      const messages = Object.entries(data).map(([field, errs]) => {
+        const text = Array.isArray(errs) ? errs.join(' ') : String(errs);
+        return `${field}: ${text}`;
+      });
       if (messages.length > 0) {
         errorMessage = messages.join(' | ');
       }
     } else if (typeof data === 'string' && data.length > 0) {
-      errorMessage = data;
+      // If the response is HTML (e.g. 404 or 500 error page), avoid dumping raw HTML into UI alert
+      if (data.includes('<!doctype') || data.includes('<html') || data.includes('<body')) {
+        errorMessage = `HTTP ${response.status} (${response.statusText || 'Not Found'}). Check backend API route.`;
+      } else {
+        errorMessage = data;
+      }
     }
 
     const error = new Error(errorMessage);
@@ -52,7 +85,7 @@ async function handleResponse(response) {
  */
 export async function getProducts(search = '') {
   const query = search.trim() ? `?search=${encodeURIComponent(search.trim())}` : '';
-  const url = `${API_BASE_URL}/products/${query}`;
+  const url = `${getBaseUrl()}/products/${query}`;
   const response = await fetch(url, {
     method: 'GET',
     headers: {
@@ -67,7 +100,7 @@ export async function getProducts(search = '') {
  * @param {number|string} id
  */
 export async function getProductById(id) {
-  const response = await fetch(`${API_BASE_URL}/products/${id}/`, {
+  const response = await fetch(`${getBaseUrl()}/products/${id}/`, {
     method: 'GET',
     headers: {
       'Accept': 'application/json',
@@ -87,7 +120,7 @@ export async function createProduct(productData) {
     quantity: parseInt(productData.quantity, 10),
   };
 
-  const response = await fetch(`${API_BASE_URL}/products/`, {
+  const response = await fetch(`${getBaseUrl()}/products/`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -110,7 +143,7 @@ export async function updateProduct(id, productData) {
     quantity: parseInt(productData.quantity, 10),
   };
 
-  const response = await fetch(`${API_BASE_URL}/products/${id}/`, {
+  const response = await fetch(`${getBaseUrl()}/products/${id}/`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
@@ -126,7 +159,7 @@ export async function updateProduct(id, productData) {
  * @param {number|string} id
  */
 export async function deleteProduct(id) {
-  const response = await fetch(`${API_BASE_URL}/products/${id}/`, {
+  const response = await fetch(`${getBaseUrl()}/products/${id}/`, {
     method: 'DELETE',
     headers: {
       'Accept': 'application/json',
