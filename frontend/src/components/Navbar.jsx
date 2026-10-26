@@ -1,6 +1,8 @@
 import React from 'react';
 
 export default function Navbar() {
+  const adminUrl = import.meta.env.PROD ? '/admin/' : 'http://127.0.0.1:8000/admin/';
+
   return (
     <header className="sticky top-0 z-40 bg-white border-b border-slate-200">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between">
@@ -24,7 +26,7 @@ export default function Navbar() {
             <span>Django REST API</span>
           </div>
           <a
-            href="http://127.0.0.1:8000/admin/"
+            href={adminUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center justify-center text-xs font-medium px-3 py-1.5 rounded-md border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition focus:outline-hidden focus:ring-2 focus:ring-blue-500/20"

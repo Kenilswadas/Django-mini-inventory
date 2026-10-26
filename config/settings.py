@@ -91,18 +91,21 @@ WSGI_APPLICATION = "config.wsgi.application"
 
 # Database
 # https://docs.djangoproject.com/en/6.1/ref/settings/#databases
-# Automatically uses DATABASE_URL if provided (e.g. Neon, Supabase, Render PostgreSQL),
-# otherwise falls back to local SQLite for development.
+# Automatically uses DATABASE_URL if provided (e.g. Neon, Supabase PostgreSQL),
+# otherwise falls back to SQLite.
 database_url = os.getenv("DATABASE_URL")
 if database_url:
     DATABASES = {
         "default": dj_database_url.parse(database_url, conn_max_age=600)
     }
 else:
+    # On Vercel, the app root is read-only. Fallback to /tmp for ephemeral SQLite if DATABASE_URL is absent.
+    is_vercel = os.getenv("VERCEL") or os.getenv("VERCEL_ENV")
+    sqlite_path = Path("/tmp") / "db.sqlite3" if is_vercel else BASE_DIR / "db.sqlite3"
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "db.sqlite3",
+            "NAME": sqlite_path,
         }
     }
 
@@ -175,6 +178,17 @@ else:
         "http://127.0.0.1:5173",
         "http://localhost:3000",
         "http://127.0.0.1:3000",
+    ]
+
+# CSRF Trusted Origins for Django Admin and mutating POST requests on Vercel
+csrf_origins_env = os.getenv("CSRF_TRUSTED_ORIGINS", "")
+if csrf_origins_env:
+    CSRF_TRUSTED_ORIGINS = [o.strip() for o in csrf_origins_env.split(",") if o.strip()]
+else:
+    CSRF_TRUSTED_ORIGINS = [
+        "https://*.vercel.app",
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
     ]
 
 # Django REST Framework Settings
