@@ -178,7 +178,13 @@ else:
         "http://127.0.0.1:5173",
         "http://localhost:3000",
         "http://127.0.0.1:3000",
+        "https://django-mini-inventory-mvm4.vercel.app",
     ]
+
+# Automatically allow all Vercel domains (*.vercel.app)
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https:\/\/.*\.vercel\.app$",
+]
 
 # CSRF Trusted Origins for Django Admin and mutating POST requests on Vercel
 csrf_origins_env = os.getenv("CSRF_TRUSTED_ORIGINS", "")

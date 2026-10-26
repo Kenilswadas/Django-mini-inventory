@@ -47,7 +47,7 @@ export default function App() {
       console.error('Failed to load products:', err);
       setError(err);
       showAlert(
-        'Unable to connect to Django API. Ensure backend is running on http://127.0.0.1:8000',
+        `Unable to connect to Django API (${err.message || 'Network error'}). Ensure backend is running.`,
         'error'
       );
     } finally {
